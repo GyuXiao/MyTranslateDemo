@@ -37,27 +37,27 @@ import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private LinearLayout beforeLay;
-    private NiceSpinner spLanguage;
-    private LinearLayout afterLay;
-    private TextView tvFrom;
-    private TextView tvTo;
+    private LinearLayout beforeLay; // 翻译前的布局
+    private NiceSpinner spLanguage; //语言选择下拉框
+    private LinearLayout afterLay; // 翻译后的布局
+    private TextView tvFrom; // 翻译源语言
+    private TextView tvTo; // 翻译目标语言
 
-    private EditText edContext;
-    private ImageView ivClear;
+    private EditText edContext; // 输入框
+    private ImageView ivClear; // 清空输入框按钮
     private TextView tvTranslation;
 
-    private LinearLayout resultLay;
-    private TextView tvResult;
-    private ImageView ivCopy;
+    private LinearLayout resultLay; // 翻译结果布局
+    private TextView tvResult; // 翻译的文本结果
+    private ImageView ivCopy; // 复制翻译的结果
 
-    private ClipboardManager myClipboard;
-    private ClipData myClip;
+    private ClipboardManager myClipboard; // 复制文本
+    private ClipData myClip; // 剪辑数据
 
-    private String fromLanguage = "auto";
-    private String toLanguage = "auto";
+    private String fromLanguage = "auto"; // 翻译语言
+    private String toLanguage = "auto"; // 目标语言
 
-    private String appId = "20201204000636944";
+    private String appId = "20201204000636944"; // 注册百度翻译平台的开发者后的 id 和 key
     private String key = "ef2ZKUAD31GlSI_mBdYC";
 
     private List<String> data = new LinkedList<>(Arrays.asList(
@@ -206,11 +206,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View v){
         switch (v.getId()){
             case R.id.iv_clear:
-                edContext.setText("");
-                ivClear.setVisibility(View.GONE);
+                edContext.setText(""); // 清空输入框
+                ivClear.setVisibility(View.GONE); // 清除数据后隐藏按钮
                 break;
             case R.id.iv_copy:
-                String inviteCode = tvResult.getText().toString();
+                String inviteCode = tvResult.getText().toString(); // 复制翻译后的结果
                 myClip = ClipData.newPlainText("text", inviteCode);
                 myClipboard.setPrimaryClip(myClip);
                 showMsg("已复制");
@@ -224,13 +224,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void translation(){
+        // 获取翻译的内容
         String inputTx = edContext.getText().toString().trim();
+        // 输入的内容非空
         if(!inputTx.isEmpty() || "".equals(inputTx)){
             tvTranslation.setText("翻译ing");
             tvTranslation.setEnabled(false);
             String salt = getNum(1);
+            // 拼接成一个字符串后加密
             String spliceStr = appId + inputTx + salt + key;// 百度文档要求
+            // 将拼接好的字符串进行MD5加密
             String sign = stringToMD5(spliceStr);
+            //异步Get请求网络
             asynGet(inputTx, fromLanguage, toLanguage, salt, sign);
         }
         else{
@@ -241,10 +246,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     // 异步请求
     private void asynGet(String context, String fromType, String toType, String salt, String sign){
         String httpStr = "http://api.fanyi.baidu.com/api/trans/vip/translate";
+        // 百度翻译API HTTPS地址
         String httpsStr = "https://fanyi-api.baidu.com/api/trans/vip/translate";
 
         String url = httpsStr + "?appid=" + appId + "&q=" + context + "&from=" + fromType
-                + "&to=" + toType + "&salt=" + salt + "&sign=" + sign;
+                + "&to=" + toType + "&salt=" + salt + "&sign=" + sign;// 拼接请求的地址
 
         OkHttpClient okHttpClient = new OkHttpClient();
         final Request request = new Request.Builder()
@@ -266,6 +272,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
 
+    // 接受到返回值后，回到UI线程操作页面变化
     private void goToUiThread(final Object object, final int key) {
         // 切换到主线程处理数据
         MainActivity.this.runOnUiThread(new Runnable() {
@@ -278,6 +285,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     showMsg("异常信息：" + object.toString());
                     Log.e("MainActivity", object.toString());
                 } else{
+                    // 通过Gson将JSON数据转为实体bean
                     final TranslateResult result = new Gson().fromJson(object.toString(), TranslateResult.class);
                     tvTranslation.setVisibility(View.GONE);
 
@@ -285,6 +293,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         showMsg("数据为空");
                     }
 
+                    // 显示翻译结果
                     tvResult.setText(result.getTrans_result().get(0).getDst());
                     resultLay.setVisibility(View.VISIBLE);
                     beforeLay.setVisibility(View.GONE);
